@@ -66,6 +66,11 @@ else
     )
     ####
     Write-host "Exporting n properties: $($mg_properties.Count)"
+    If (AskForChoice "Include Group membership info? (takes a bit longer)")
+    {
+        $mg_properties += "Groups"
+    }
+    $mg_properties += "Manager"
 	####### Retrieve Azure AD User list
     $mgusers = Get-MGuser -All -Property $mg_properties
     Write-Host "User Count: $($mgusers.count) [All users]"
@@ -94,16 +99,28 @@ else
                 $propvalue=($mguser.BusinessPhones|Sort-Object|ForEach-Object {"$($_)"}) -Join ", "
                 $row | Add-Member -Type NoteProperty -Name $propname -Value $propvalue
             }
+            elseif ($prop -eq "Groups"){
+                $propname = "Groups"
+                $UserGroups = GroupParents $mguser.Id
+                $propvalue = ($UserGroups.displayName | Sort-Object) -join ", "
+                $row | Add-Member -Type NoteProperty -Name $propname -Value $propvalue
+            }
+            elseif ($prop -eq "Manager"){
+                $propname = "Manager"
+                $mgr_id = Get-MgUserManager -UserId $mguser.Id -ErrorAction Ignore
+                if ($mgr_id) {
+                    $mgr = $MgUsers | Where-Object Id -EQ $mgr_id.Id
+                    $propvalue = "$($mgr.DisplayName) <$($mgr.Mail)>"
+                }
+                else {
+                    $propvalue = ""
+                }
+                $row | Add-Member -Type NoteProperty -Name $propname -Value $propvalue
+            }
             else{
                 $row | Add-Member -Type NoteProperty -Name $prop -Value $mguser.($prop)
             }
         }
-        # append manager columns
-        ### manager
-        $mgr_id = Get-MgUserManager -UserId $mguser.Id -ErrorAction Ignore
-        $mgr = $MgUsers | Where-Object Id -EQ $mgr_id.Id
-        $row | Add-Member -Type NoteProperty -Name "MgrName"  -Value $mgr.DisplayName
-        $row | Add-Member -Type NoteProperty -Name "MgrEmail" -Value $mgr.Mail
         ### append row
         $rows+= $row
     }
