@@ -493,7 +493,7 @@ Function PauseTimed ()
     }
 Function PressEnterToContinue
 {
-    Read-Host "Press <Enter> to continue"
+    Read-Host "Press <Enter> to continue" | Out-Null
 }
 Function GlobalsSave ($Globals, $scriptXML)
     {
