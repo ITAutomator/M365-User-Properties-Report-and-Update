@@ -47,12 +47,13 @@ if (!(Test-Path $scriptCSV))
     ######### Template
 	$ErrOut=201; Write-Host "Err $ErrOut : Couldn't find '$(Split-Path $scriptCSV -leaf)'. Template CSV created. Edit CSV and run again.";Pause; Exit($ErrOut)
 }
-## ----------Fill $entries with contents of file or something
+# see if there's a more recent CSV with this naming scheme
+$scriptCSV = Get-ChildItem -Path $scriptcsv.Replace(".csv","*.csv") | Sort-Object LastWriteTime | Select-Object -Last 1 | Select-Object FullName -ExpandProperty FullName
+# ----------Fill $entries with contents of file or something
 $entries=@(import-csv $scriptCSV -Encoding UTF8)
-$entries_cols = ($entries | Get-Member | Where-Object -Property "MemberType" -EQ "NoteProperty" | Select-Object "Name").Name
 $entriescount = $entries.count
-##
-####
+# gather a list of properties to be inspected
+$entries_cols = ($entries | Get-Member | Where-Object -Property "MemberType" -EQ "NoteProperty" | Where-Object -Property "Name" -NE "UserPrincipalName" | Select-Object "Name").Name
 Write-Host "-----------------------------------------------------------------------------"
 Write-Host ("$scriptName        Computer:$env:computername User:$env:username PSver:"+($PSVersionTable.PSVersion.Major))
 Write-Host ""
@@ -68,6 +69,10 @@ Write-Host 'Use "<clear>" to clear column of contents'
 Write-Host ""
 $entries | Format-Table
 Write-Host "-----------------------------------------------------------------------------"
+$required_col = "UserPrincipalName"
+if (-not ($entries | Get-Member | Where-Object -Property "Name" -EQ $required_col)) {
+    Write-Host "Err: Required column not found: $($required_col)"; PressEnterToContinue; Exit
+}
 PressEnterToContinue
 $no_errors = $true
 $error_txt = ""
@@ -90,6 +95,7 @@ if (-not ($connected_ok))
 }
 else
 { # connect OK
+    $processed=0
     $choiceLoop=0
     $i=0
     $change_i=0
@@ -100,7 +106,7 @@ else
         if ($choiceLoop -ne 1)
         { # Process all not selected yet, Ask
             $choices = @("&Yes","Yes to &All","&No","No and E&xit") 
-            $choiceLoop = AskforChoice -Message "Process entry $($i)?" -Choices $choices -DefaultChoice 1
+            $choiceLoop = AskforChoice -Message "Process entry $($i)?" -Choices $choices -DefaultChoice 0
         } # Process all not selected yet, Ask
         if (($choiceLoop -eq 0) -or ($choiceLoop -eq 1))
         { # Process
@@ -143,7 +149,7 @@ else
                     } 
                     Else
                     { # Update
-                        Write-Host "$($prop): [$($user.$prop)] will be changed to [$($x.$prop)]" -ForegroundColor Yellow
+                        Write-Host "$($prop): [$($user.$prop)] changed to [$($x.$prop)]" -ForegroundColor Yellow
                         $myargs = @{
                           UserId = $user.Id
                           $prop = $x.$prop
@@ -159,11 +165,11 @@ else
                     Write-host "[After]"
                     $user = Get-MgUser -Filter "(UserPrincipalName eq '$($UserNameOrEmail)')" -Property (@("id")+$entries_cols) 
                     ($user | Select-Object $entries_cols | Format-List | Out-String) -Split "`r`n" | Where-Object({ $_ -ne "" }) | Write-Host
-			        #######
+			        Write-host "[OK]" -NoNewline -ForegroundColor Yellow; Write-host " Change made"
                 } # change made
                 else
                 { # no change
-                    Write-host "[OK] Nothing changed"
+                    Write-host "[OK]" -NoNewline -ForegroundColor Green; Write-host " Nothing changed"
                 } # no change
             } # user ok
             ####### End code for object $x
@@ -178,8 +184,8 @@ else
             break
             }
     } # each entry
-    Write-Host "Summary"
-    Write-Host "Changes made: $($change_i)"
+    Write-Host "------------------------------------------------------------------------------------"
+    Write-Host "Changes made: $($change_i)" -ForegroundColor $(if ($change_i -eq 0) {"Green"} else {"Yellow"})
     Write-Host "------------------------------------------------------------------------------------"
     $message ="Done. " +$processed+" of "+$entriescount+" entries processed. Press [Enter] to exit."
     Write-Host $message
