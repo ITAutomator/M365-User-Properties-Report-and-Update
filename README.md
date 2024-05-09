@@ -1,4 +1,8 @@
 # M365-User-Properties-Report-and-Update
+
+See User guide (pdf) for more information
+To Download: Click the green Code button (above) and click Download Zip 
+
 Update M365 user properties (Entra properties) in bulk via csv file.
 
 ![image](https://github.com/ITAutomator/M365-User-Properties-Report-and-Update/assets/135157036/b0d4e774-e69f-48f1-adca-81b6957d2412)
