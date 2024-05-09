@@ -12,6 +12,7 @@ This will output a CSV file containing your users.
 Note: Only Enabled accounts are reported.  Only members are reported (vs guests).
 
 Phase 2: Edit
+
 ![image](https://github.com/ITAutomator/M365-User-Properties-Report-and-Update/assets/135157036/23ddc22b-469d-44ed-8f97-f435e5909e93)
 
 Make a copy of the CSV file.  Put the UserPrincipalName as the first (required) column.
