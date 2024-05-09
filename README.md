@@ -1,6 +1,7 @@
 # M365-User-Properties-Report-and-Update
 
-See User guide (pdf) for more information
+See User guide (pdf) for more information: https://github.com/ITAutomator/M365-User-Properties-Report-and-Update/blob/main/M365%20User%20Properties%20Report%20and%20Update%20Readme.pdf
+
 To Download: Click the green Code button (above) and click Download Zip 
 
 Update M365 user properties (Entra properties) in bulk via csv file.
