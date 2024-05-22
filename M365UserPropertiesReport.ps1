@@ -27,11 +27,17 @@ Write-Host "--------------------------------------------------------------------
 $no_errors = $true
 $error_txt = ""
 $results = @()
-# Load required modules
-$module= "Microsoft.Graph.Users" ; Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $false; Write-Host $lm_result
-if ($lm_result.startswith("ERR")) {
-    Write-Host "ERR: Load-Module $($module) failed. Suggestion: Open PowerShell $($PSVersionTable.PSVersion.Major) as admin and run: Install-Module $($module)";Start-sleep  3; Return $false
+#region modules
+$modules=@()
+$modules+="Microsoft.Graph.Users"
+ForEach ($module in $modules)
+{ 
+    Write-Host "Loadmodule $($module)..." -NoNewline ; $lm_result=LoadModule $module -checkver $false; Write-Host $lm_result
+    if ($lm_result.startswith("ERR")) {
+        Write-Host "ERR: Load-Module $($module) failed. Suggestion: Open PowerShell $($PSVersionTable.PSVersion.Major) as admin and run: Install-Module $($module)";Start-sleep  3; Return $false
+    }
 }
+#endregion modules
 # Connect
 $connected_ok = ConnectMgGraph 
 if (!($connected_ok)) 
@@ -42,29 +48,35 @@ else
 { # connect ok
     Write-Host "CONNECTED"
     Write-Host "--------------------"
+    # For complete field list (look for String values)
+    # https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.users/update-mguser
     $mg_properties = @(
         'id'
         ,'UserPrincipalName'
-        ,'DisplayName'
-        ,'mail'
         ,'AccountEnabled'
-        ,'BusinessPhones'
-        ,'city'
-        ,'country'
-        ,'CreatedDateTime'
-        ,'department'
+        ,'DisplayName'
         ,'GivenName'
-        ,'JobTitle'
-        ,'LastPasswordChangeDateTime'
-        ,'MobilePhone'
-        ,'OfficeLocation'
-        ,'postalcode'
-        ,'state'
-        ,'streetAddress'
         ,'Surname'
-        ,'userType'
+        ,'mail'
+        ,'BusinessPhones'
+        ,'MobilePhone'
+        ,'FaxNumber' 
+        ,'streetAddress'
+        ,'city'
+        ,'state'
+        ,'postalcode'
+        ,'country'
+        ,'CompanyName'
+        ,'OfficeLocation'
+        ,'JobTitle'
+        ,'department'
+        ,'CreatedDateTime'
+        ,'LastPasswordChangeDateTime'
+        ,'EmployeeType'
+        ,'UserType'
     )
     ####
+
     Write-host "Exporting n properties: $($mg_properties.Count)"
     If (AskForChoice "Include Group membership info? (takes a bit longer)")
     {
